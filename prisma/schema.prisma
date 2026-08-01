@@ -43,13 +43,15 @@ model User {
 }
 
 /// Um "workspace" é um contexto financeiro isolado (Pessoal ou Empresa).
-/// Toda entidade financeira pertence a exatamente um workspace, e o acesso
-/// é sempre validado via WorkspaceMember — isso garante que dados pessoais
-/// e da empresa nunca se misturem.
+/// O sistema é único: existe exatamente um workspace de cada tipo (por isso
+/// `type` é @unique), compartilhado por todos os usuários — gestão em
+/// conjunto, não uma cópia por usuário. Toda entidade financeira pertence a
+/// exatamente um workspace, e o acesso é sempre validado via WorkspaceMember,
+/// garantindo que dados pessoais e da empresa nunca se misturem.
 model Workspace {
   id        String        @id @default(cuid())
   name      String
-  type      WorkspaceType
+  type      WorkspaceType @unique
   createdAt DateTime      @default(now())
 
   members        WorkspaceMember[]

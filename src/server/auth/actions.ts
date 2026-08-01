@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "./password";
 import { createSession, destroySession } from "./session";
-import { createDefaultWorkspacesForUser } from "@/server/workspaces/service";
+import { joinSharedWorkspaces } from "@/server/workspaces/service";
 
 export type AuthActionState = { error?: string } | undefined;
 
@@ -40,7 +40,7 @@ export async function signupAction(
 
   const user = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({ data: { name, email, passwordHash } });
-    await createDefaultWorkspacesForUser(tx, created.id);
+    await joinSharedWorkspaces(tx, created.id);
     return created;
   });
 

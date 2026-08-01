@@ -6,7 +6,8 @@ export default function SignupPage() {
     <Card>
       <h1 className="mb-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">Criar conta</h1>
       <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-        Ao criar sua conta, dois espaços separados são criados automaticamente: Pessoal e Empresa.
+        Sua conta terá acesso aos espaços compartilhados Pessoal e Empresa, geridos em conjunto por
+        todos os usuários do sistema.
       </p>
       <SignupForm />
     </Card>

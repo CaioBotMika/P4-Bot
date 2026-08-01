@@ -40,24 +40,40 @@ export async function requireWorkspaceAccess(userId: string, workspaceId: string
   return membership;
 }
 
-export async function createDefaultWorkspacesForUser(
+/**
+ * O sistema é único: existe exatamente um workspace Pessoal e um Empresa,
+ * compartilhados por todos os usuários (gestão em conjunto, não por usuário).
+ * `type` é @unique no schema, então isso funciona como um "get or create".
+ */
+async function ensureSharedWorkspace(
   tx: Prisma.TransactionClient,
-  userId: string,
+  type: "PESSOAL" | "EMPRESA",
+  name: string,
 ) {
-  const pessoal = await tx.workspace.create({
-    data: {
-      name: "Pessoal",
-      type: "PESSOAL",
-      members: { create: { userId, role: "OWNER" } },
-    },
-  });
+  const existing = await tx.workspace.findUnique({ where: { type } });
+  if (existing) return existing;
 
-  const empresa = await tx.workspace.create({
-    data: {
-      name: "Empresa",
-      type: "EMPRESA",
-      members: { create: { userId, role: "OWNER" } },
-    },
+  try {
+    return await tx.workspace.create({ data: { name, type } });
+  } catch {
+    // Corrida rara: outro signup criou o workspace entre o findUnique e o create.
+    const created = await tx.workspace.findUnique({ where: { type } });
+    if (created) return created;
+    throw new Error(`Não foi possível garantir o workspace ${type}`);
+  }
+}
+
+/** Garante os dois workspaces compartilhados e adiciona o usuário como membro de ambos. */
+export async function joinSharedWorkspaces(tx: Prisma.TransactionClient, userId: string) {
+  const pessoal = await ensureSharedWorkspace(tx, "PESSOAL", "Pessoal");
+  const empresa = await ensureSharedWorkspace(tx, "EMPRESA", "Empresa");
+
+  await tx.workspaceMember.createMany({
+    data: [
+      { userId, workspaceId: pessoal.id, role: "OWNER" },
+      { userId, workspaceId: empresa.id, role: "OWNER" },
+    ],
+    skipDuplicates: true,
   });
 
   return { pessoal, empresa };
