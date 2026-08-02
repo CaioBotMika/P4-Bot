@@ -6,17 +6,27 @@ mistura entre as duas finanças.
 
 ## Como funciona a separação Pessoal x Empresa
 
-Ao criar sua conta, dois **workspaces** são criados automaticamente:
+O sistema é **um só, compartilhado por todos os usuários** — a gestão é em
+conjunto, não uma cópia por pessoa. Existem exatamente dois **workspaces** no
+sistema todo:
 
 - 🏠 **Pessoal**
 - 🏢 **Empresa**
 
-Categorias, transações e recorrências pertencem sempre a um único workspace.
-Toda consulta e escrita no banco passa por um `workspaceId` obrigatório e é
-validada contra os workspaces do usuário logado (`requireWorkspaceAccess` /
-`requireActiveWorkspace`) — não existe caminho de código que misture dados dos
-dois contextos. A troca entre Pessoal/Empresa é feita pelo seletor no topo da
-tela e fica salva num cookie.
+Toda conta criada (via `/signup`) entra automaticamente como membro dos dois
+(o primeiro signup do sistema é quem os cria; os demais só passam a
+participar). Ou seja: se você e outra pessoa criarem contas separadas, ambos
+enxergam e editam os **mesmos** lançamentos — é a mesma "planilha", só que com
+logins individuais.
+
+O que continua rigorosamente isolado é a **fronteira entre Pessoal e
+Empresa**: categorias, transações e recorrências pertencem sempre a um único
+workspace, e toda consulta/escrita no banco passa por um `workspaceId`
+obrigatório validado contra os workspaces existentes
+(`requireWorkspaceAccess` / `requireActiveWorkspace`) — não existe caminho de
+código que misture dados das duas finanças. A troca entre Pessoal/Empresa é
+feita pelo seletor no topo da tela e fica salva num cookie (por navegador, não
+afeta os outros usuários).
 
 ## Stack
 
@@ -71,8 +81,8 @@ prisma/
 
 ## Modelo de dados
 
-- `User` — conta de login
-- `Workspace` (`PESSOAL` | `EMPRESA`) + `WorkspaceMember` — isolamento de dados
+- `User` — conta de login (qualquer conta pode gerenciar Pessoal e Empresa)
+- `Workspace` (`PESSOAL` | `EMPRESA`, `type` é `@unique` — só existe um de cada) + `WorkspaceMember` — fronteira de isolamento entre as duas finanças
 - `Category` (`RECEITA` | `DESPESA`) — por workspace
 - `Transaction` — cobre despesas, contas a pagar e a receber (`status`: `PENDENTE`/`PAGO`, "Atrasado" é calculado a partir do vencimento)
 - `RecurringRule` — despesas/receitas fixas mensais; ao abrir o Dashboard ou as Transações do mês atual, os lançamentos pendentes daquele mês são gerados automaticamente (idempotente, não duplica)
@@ -107,5 +117,5 @@ prisma/
 
 ## Limitações atuais / próximos passos sugeridos
 
-- Cada usuário tem seus próprios workspaces Pessoal/Empresa; convidar outra pessoa para compartilhar um mesmo workspace (ex. cônjuge/sócio) ainda não tem UI — o modelo (`WorkspaceMember`) já suporta múltiplos membros por workspace, faltando apenas a tela de convite.
+- Não há papéis/permissões diferenciados entre usuários (todo mundo que faz login tem acesso total a Pessoal e Empresa) nem tela de gestão de usuários — hoje qualquer pessoa com o link de `/signup` entra no sistema compartilhado.
 - Geração de lançamentos recorrentes acontece ao abrir o Dashboard/Transações (sem infraestrutura de cron); há também um botão manual em Recorrências.

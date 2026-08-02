@@ -95,6 +95,9 @@ CREATE TABLE "RecurringRule" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Workspace_type_key" ON "Workspace"("type");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "WorkspaceMember_userId_workspaceId_key" ON "WorkspaceMember"("userId", "workspaceId");
 
 -- CreateIndex
